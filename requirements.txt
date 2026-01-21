@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+# Actualizamos a la versión 3+ que maneja mejor el Torch moderno
+sentence-transformers>=3.0.0
+# Dejamos que instale el Torch compatible con CPU
+torch --index-url https://download.pytorch.org/whl/cpu
+pydantic
