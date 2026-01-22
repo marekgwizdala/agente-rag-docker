@@ -1,60 +1,57 @@
 name: 🏗️ AI Architect CI/CD Pipeline
 
-# 1. EL GATILLO (Trigger)
-# Esto se activa cada vez que haces un PUSH a la rama 'main'
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# 2. LAS TAREAS (Jobs)
 jobs:
   build-and-test:
     name: 🧪 Build & Test Docker Architecture
-    runs-on: ubuntu-latest # GitHub nos presta un servidor Linux GRATIS
+    runs-on: ubuntu-latest
 
     steps:
-    # A. Descargar tu código del repo
+    # 1. Descargar código
     - name: 📥 Checkout code
       uses: actions/checkout@v3
 
-    # B. Configurar Docker
-    - name: 🐳 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+    # 2. Preparar entorno (Permisos de carpetas para el volumen)
+    # GitHub Actions a veces falla con volúmenes si la carpeta no existe
+    - name: 📂 Create Volume Directory
+      run: mkdir -p qdrant_data && chmod 777 qdrant_data
 
-    # C. Instalar Docker Compose (versión moderna)
-    - name: 🔧 Install Docker Compose
-      run: |
-        sudo apt-get update
-        sudo apt-get install docker-compose-plugin
-        docker compose version
-
-    # D. LA PRUEBA DE FUEGO
-    # Construimos y levantamos todo. Si algo falla aquí, el pipeline se rompe (Rojo).
+    # 3. Construir y Levantar (Usando el Docker pre-instalado)
     - name: 🔨 Build and Start Services
       run: |
-        echo "🚀 Construyendo imágenes..."
+        echo "🚀 Versión de Docker:"
+        docker compose version
+        
+        echo "🏗️ Construyendo imágenes..."
         docker compose build
         
         echo "🔥 Levantando infraestructura..."
         docker compose up -d
         
+        echo "⏳ Esperando 15s para que los servicios inicien..."
+        sleep 15
+        
         echo "🕵️ Verificando estado..."
         docker compose ps
         
-        echo "⏳ Esperando 10s para estabilización..."
-        sleep 10
+        # Validación: Contamos si hay 3 líneas de servicios corriendo
+        # El comando busca líneas que contengan "Up" o "running"
+        SERVICES_UP=$(docker compose ps --services --filter "status=running" | wc -l)
         
-        echo "✅ Verificando que los contenedores siguen vivos..."
-        if [ $(docker compose ps -q | wc -l) -lt 3 ]; then
-          echo "❌ ERROR: Algunos contenedores murieron."
+        if [ "$SERVICES_UP" -lt 3 ]; then
+          echo "❌ ERROR: Se esperaban 3 servicios, se encontraron $SERVICES_UP."
           docker compose logs
           exit 1
         else
-          echo "🎉 ÉXITO: Todos los sistemas operativos."
+          echo "🎉 ÉXITO TOTAL: Los 3 microservicios (Frontend, API, DB) están vivos."
         fi
 
-    # E. Limpieza
+    # 4. Limpieza final
     - name: 🧹 Teardown
+      if: always()
       run: docker compose down
