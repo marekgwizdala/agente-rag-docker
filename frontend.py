@@ -1,17 +1,23 @@
 import streamlit as st
 import requests
-# from llm_simulator import MockLLM  <-- ADIÓS SIMULADOR
-from llm_real import RealLLM       # <-- HOLA REALIDAD
+import os
+from llm_real import RealLLM
 
-# --- CONFIGURACIÓN ---
-ST_API_URL = "http://127.0.0.1:8080/embed"
-ST_QDRANT_URL = "http://127.0.0.1:6333"
+# --- CONFIGURACIÓN DE ARQUITECTO (Dynamic Environment) ---
+# Aquí ocurre la magia del desacoplamiento.
+# El código pregunta: "¿Hay una variable llamada API_URL?"
+# Si la respuesta es SÍ: Usa esa dirección (ej: http://ai-api:8000/embed)
+# Si la respuesta es NO: Usa localhost (para cuando pruebas en tu laptop sin Docker)
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8080/embed")
+QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 COLLECTION_NAME = "conocimiento_base"
 
-st.set_page_config(page_title="AI Architect Chat", page_icon="🧠")
+# Logs para ver qué está pasando (Debugging de Arquitecto)
+print(f"🔧 [System Start] Configurando Frontend contra: API={API_URL} | DB={QDRANT_URL}")
 
+st.set_page_config(page_title="AI Architect Chat", page_icon="🧠")
 st.title("🧠 Asistente RAG con Llama 3")
-st.caption("Arquitectura: Streamlit -> FastAPI -> Qdrant -> GROQ (Llama3)")
+st.caption(f"Arquitectura: Streamlit -> {API_URL} -> {QDRANT_URL} -> GROQ")
 
 # --- SIDEBAR: CONFIGURACIÓN ---
 with st.sidebar:
@@ -46,27 +52,30 @@ def get_rag_response(user_query):
 
     # 1. Retrieval
     try:
-        resp = requests.post(ST_API_URL, json={"text": user_query})
+        # Usamos la variable API_URL dinámica
+        resp = requests.post(API_URL, json={"text": user_query})
+        if resp.status_code != 200:
+             return f"Error API: {resp.status_code}"
         query_vector = resp.json()["vector"]
-    except:
-        return "Error en API Embeddings."
+    except Exception as e:
+        return f"Error conectando a API Embeddings ({API_URL}): {e}"
 
     # 2. Search
     try:
-        search_url = f"{ST_QDRANT_URL}/collections/{COLLECTION_NAME}/points/search"
+        # Usamos la variable QDRANT_URL dinámica
+        search_url = f"{QDRANT_URL}/collections/{COLLECTION_NAME}/points/search"
         payload = {"vector": query_vector, "limit": 1, "with_payload": True}
         search_resp = requests.post(search_url, json=payload)
         resultados = search_resp.json().get("result", [])
-    except:
-        return "Error en Qdrant."
+    except Exception as e:
+        return f"Error conectando a Qdrant ({QDRANT_URL}): {e}"
 
     # 3. Generation
     context_text = ""
     if resultados:
         best_match = resultados[0]
         context_text = best_match["payload"]["contenido"]
-        # Mostrar Debug
-        with st.expander("🕵️ Lo que encontró el buscador (Contexto)"):
+        with st.expander("🕵️ Contexto Recuperado"):
             st.info(f"{context_text}")
     else:
         with st.expander("🕵️ Contexto"):
@@ -82,7 +91,7 @@ if prompt := st.chat_input("Pregunta algo..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        with st.spinner("Consultando a Llama 3..."):
+        with st.spinner("Consultando arquitectura..."):
             response = get_rag_response(prompt)
             st.markdown(response)
     

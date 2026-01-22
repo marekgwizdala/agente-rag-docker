@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  # 1. BASE DE DATOS (Caja de abajo en el diagrama)
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant-db
+    ports:
+      - "6333:6333"
+    volumes:
+      # PERSISTENCIA: Mapeamos la carpeta local 'qdrant_data' a la memoria del contenedor
+      # Si el contenedor muere, tus datos quedan a salvo en tu disco.
+      - ./qdrant_data:/qdrant/storage
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 2. BACKEND API (Caja del medio)
+  ai-api:
+    build: .  # Construye usando el Dockerfile default (el de la API)
+    container_name: ai-api
+    ports:
+      - "8080:8000" # Puerto 8080 de tu PC -> Puerto 8000 del contenedor
+    networks:
+      - ai-network
+    depends_on:
+      - qdrant # Espera a que la DB inicie primero
+
+  # 3. FRONTEND WEB (Caja de arriba)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend # Construye usando el Dockerfile específico
+    container_name: ai-frontend
+    ports:
+      - "8501:8501"
+    networks:
+      - ai-network
+    environment:
+      # AQUÍ OCURRE LA MAGIA DEL DNS:
+      # Ya no usamos 'localhost' ni IPs. Usamos los nombres de los servicios definidos arriba.
+      - API_URL=http://ai-api:8000/embed
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - ai-api
+
+# DEFINICIÓN DE LA RED (El cable azul del diagrama)
+networks:
+  ai-network:
+    driver: bridge

@@ -1,0 +1,20 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Instalamos dependencias
+RUN pip install --no-cache-dir streamlit requests groq
+
+# Copiamos el código del frontend y el módulo del LLM
+COPY frontend.py .
+COPY llm_real.py .
+
+# Exponemos el puerto estándar de Streamlit
+EXPOSE 8501
+
+# Salud del contenedor (Healthcheck)
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+
+# Comando de inicio
+# OJO: Configuramos CORS y XSRF false aquí para evitar problemas en Cloud Shell
+CMD ["streamlit", "run", "frontend.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.enableCORS=false", "--server.enableXsrfProtection=false"]
