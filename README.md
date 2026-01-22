@@ -1,68 +1,104 @@
-# 🤖 AI Solutions Architect Agent: RAG con Docker & Llama 3
+# 🤖 Agentic RAG Architecture: Dockerized & Cloud-Agnostic
 
-Este proyecto implementa una arquitectura **RAG (Retrieval-Augmented Generation)** completa, agnóstica a la nube y contenerizada. Diseñada para demostrar patrones de **Ingeniería de Software aplicados a IA Generativa**.
+> **Sistema de Inteligencia Artificial Agéntica (RAG) desplegado en microservicios contenerizados. Diseño resiliente, escalable y agnóstico a la nube.**
 
-![Arquitectura RAG](https://img.shields.io/badge/Architecture-RAG-blue) ![Docker](https://img.shields.io/badge/Docker-Containerized-blue) ![Model](https://img.shields.io/badge/LLM-Llama%203-orange)
+![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![AI](https://img.shields.io/badge/AI-Llama%203.3-orange?logo=meta&logoColor=white)
+![DB](https://img.shields.io/badge/Vector%20DB-Qdrant-red)
 
-## 🏗️ Arquitectura de la Solución
+## 🏗️ Arquitectura del Sistema
 
-El sistema sigue un diseño de microservicios desacoplados:
+Este proyecto implementa una arquitectura **Cloud-Native** desacoplada. Utiliza **Docker Compose** para la orquestación de servicios y **Docker Volumes** para garantizar la persistencia de datos vectoriales.
 
-1.  **Frontend (Cliente):** Interfaz web construida con **Streamlit**. Gestiona el chat y la configuración de API Keys.
-2.  **Backend (Embeddings API):** Servicio REST con **FastAPI**. Convierte texto en vectores (optimizado para entornos ligeros).
-3.  **Vector Database (Memoria):** Instancia de **Qdrant** corriendo en Docker. Almacena el conocimiento semántico.
-4.  **GenAI Engine (Cerebro):** Integración con **Groq API** para inferencia ultrarrápida usando **Llama 3.3**.
+```mermaid
+graph TD
+    User((👤 Usuario))
 
-### 🛠️ Tech Stack
+    subgraph Docker_Host ["Docker Host (Tu Servidor)"]
+        style Docker_Host fill:#f9f9f9,stroke:#333,stroke-width:2px
 
-*   **Lenguaje:** Python 3.9+
-*   **Contenerización:** Docker & Docker Network
-*   **Orquestación:** Scripts Python (ETL & Agent)
-*   **IA / ML:**
-    *   *LLM:* Llama-3.3-70b-versatile (vía Groq)
-    *   *Vector Store:* Qdrant
-    *   *Framework:* Requests (HTTP REST puro para máxima compatibilidad)
+        subgraph Docker_Network ["Docker Network: ai-network (Bridge)"]
+            style Docker_Network fill:#e1f5fe,stroke:#0277bd,stroke-dasharray: 5 5
 
-## 🚀 Cómo ejecutarlo (Quickstart)
+            Frontend["🖥️ Container: ai-frontend<br/>(Streamlit)"]
+            API["⚙️ Container: ai-api<br/>(FastAPI)"]
+            DB["🗄️ Container: qdrant-db<br/>(Vector DB)"]
+        end
 
-Esta arquitectura utiliza **Docker Compose** para orquestar los microservicios y garantizar la persistencia de datos.
+        Volume["💾 Host Volume:<br/>./qdrant_data"]
+    end
+
+    %% Flujos de Comunicación
+    User -- "Browser HTTP: 8501" --> Frontend
+    Frontend -- "Internal DNS:<br/>http://ai-api:8000" --> API
+    API -- "Internal DNS:<br/>http://qdrant:6333" --> DB
+
+    %% Persistencia
+    DB -.-> Volume
+```
+
+## 🛠️ Tech Stack
+
+*   **Frontend:** Streamlit (Interfaz de Chat Reactiva).
+*   **Backend API:** FastAPI (Microservicio REST).
+*   **Vector Database:** Qdrant (Almacenamiento Semántico Persistente).
+*   **GenAI Engine:** Groq API (Inferencia Llama 3.3-70b).
+*   **Infraestructura:** Docker Compose, Docker Networks, Volumes.
+
+## 🚀 Guía de Despliegue (Quickstart)
 
 ### Requisitos
-*   Docker instalado.
-*   Una API Key de Groq (Gratuita).
+*   Docker & Docker Compose instalados.
+*   API Key de Groq (Gratuita).
 
-### Pasos
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/KorbenDallas007/agente-rag-docker.git
+cd agente-rag-docker
+```
 
-1.  **Clonar el repositorio:**
-    ```bash
-    git clone https://github.com/KorbenDallas007/agente-rag-docker.git
-    cd agente-rag-docker
-    ```
+### 2. Despliegue de Infraestructura
+Levanta todo el stack con un solo comando. El sistema construirá las imágenes y conectará la red automáticamente.
 
-2.  **Desplegar la Arquitectura (Un solo comando):**
-    ```bash
-    docker compose up --build -d
-    ```
-    *Esto levantará:*
-    *   🖥️ **Frontend:** http://localhost:8501
-    *   ⚙️ **API:** http://localhost:8080
-    *   🗄️ **Qdrant:** http://localhost:6333
+```bash
+docker compose up --build -d
+```
 
-3.  **Ingestar Conocimiento (ETL):**
-    *Este script carga los datos iniciales en la base vectorial.*
-    ```bash
-    # (Opcional) Crea un entorno virtual si lo ejecutas localmente fuera de Docker
-    pip install -r requirements.txt
-    python3 etl_pipeline.py
-    ```
+Verifica que los 3 servicios estén corriendo:
+```bash
+docker compose ps
+```
 
-4.  **Acceder:**
-    Abre tu navegador en `http://localhost:8501`.
+### 3. Ingesta de Conocimiento (ETL)
+Carga los documentos base en la memoria vectorial (Qdrant).
+*Nota: Este script se ejecuta localmente y se conecta a la infraestructura vía puertos expuestos.*
+
+```bash
+# (Opcional) Crea un entorno virtual
+pip install -r requirements.txt
+
+# Ejecutar ETL
+python3 etl_pipeline.py
+```
+
+### 4. Acceder al Sistema
+*   **Frontend Web:** Abre tu navegador en `http://localhost:8501`
+*   **API Docs:** `http://localhost:8080/docs`
+*   **Qdrant Dashboard:** `http://localhost:6333/dashboard`
 
 ## 📸 Demo
 
-<img width="774" height="803" alt="image" src="https://github.com/user-attachments/assets/8fc097f1-3271-4b18-a61f-e36871f4e8a9" />
+<img width="786" height="833" alt="image" src="https://github.com/user-attachments/assets/ea4fd948-7249-4b99-b88e-f24bd02bd31a" />
 
+
+## 🧠 Características Avanzadas
+
+*   **Persistencia de Datos:** El sistema utiliza volúmenes de Docker (`./qdrant_data`), lo que permite que la "memoria" de la IA sobreviva a reinicios o caídas de contenedores.
+*   **Service Discovery:** Los microservicios se comunican mediante DNS interno de Docker, eliminando la dependencia de IPs fijas.
+*   **Configuración Dinámica:** El Frontend lee variables de entorno (`API_URL`, `QDRANT_URL`) para adaptarse a entornos de Desarrollo o Producción.
+*   **Deterministic Embedding Simulation:** Implementación de un algoritmo de hashing determinista para simular embeddings sin consumo excesivo de RAM en entornos limitados.
 
 ---
-*Desarrollado como parte del entrenamiento avanzado para AI Solutions Architect.*
+*Desarrollado por [KorbenDallas007](https://github.com/KorbenDallas007) - AI Solutions Architect Portfolio.*
+```
