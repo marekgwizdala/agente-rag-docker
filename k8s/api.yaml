@@ -1,0 +1,53 @@
+# 1. Definición del Secreto (Para guardar la Key de forma segura)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-secrets
+type: Opaque
+data:
+  # En un caso real, esto sería tu API Key en Base64.
+  # Aquí ponemos un placeholder para el portafolio.
+  groq-api-key: "PLACEHOLDER_BASE64_ENCODED"
+---
+# 2. El Despliegue (Deployment)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-api
+spec:
+  replicas: 2 # <--- ARQUITECTURA: Alta Disponibilidad (2 instancias)
+  selector:
+    matchLabels:
+      app: ai-api
+  template:
+    metadata:
+      labels:
+        app: ai-api
+    spec:
+      containers:
+      - name: ai-api
+        # En producción, aquí iría tu imagen subida a Docker Hub/ECR
+        image: tu-usuario/ai-api:latest 
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        # Inyectamos la Key desde el Secreto seguro
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: ai-secrets
+              key: groq-api-key
+---
+# 3. El Servicio (Red Interna)
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-api # Este es el DNS interno (igual que en Docker Compose)
+spec:
+  selector:
+    app: ai-api
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
