@@ -1,66 +1,65 @@
-# Configuración del Proveedor (AWS)
-provider "aws" {
-  region = "us-east-1"
+# Configuración del Proveedor (Google Cloud)
+provider "google" {
+  project = "ai-architect-lab-485015" # Tu ID de proyecto actual (o variable)
+  region  = "us-central1"
+  zone    = "us-central1-a"
 }
 
 # 1. Red Privada (VPC)
-resource "aws_vpc" "ai_vpc" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "AI-RAG-Network"
-  }
+resource "google_compute_network" "ai_vpc" {
+  name = "ai-rag-network"
 }
 
-# 2. Firewall (Security Group)
-resource "aws_security_group" "allow_ai_traffic" {
-  name        = "allow_streamlit"
-  description = "Permitir trafico al Frontend de IA"
-  vpc_id      = aws_vpc.ai_vpc.id
+# 2. Firewall (Permitir tráfico)
+resource "google_compute_firewall" "allow_web" {
+  name    = "allow-streamlit-and-ssh"
+  network = google_compute_network.ai_vpc.name
 
-  # Permitir entrada al puerto 8501 (Streamlit)
-  ingress {
-    from_port   = 8501
-    to_port     = 8501
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Abierto al mundo
+  # Permitimos SSH (22) y Streamlit (8501)
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "8501"]
   }
 
-  # Permitir SSH para administración
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # Permitir salida a internet
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  # Desde cualquier IP del mundo
+  source_ranges = ["0.0.0.0/0"]
 }
 
-# 3. Servidor (EC2 Instance)
-resource "aws_instance" "ai_server" {
-  ami           = "ami-0c55b159cbfafe1f0" # Ubuntu 22.04 LTS
-  instance_type = "t3.medium" # 2 vCPU, 4GB RAM
+# 3. Servidor Virtual (Compute Engine VM)
+resource "google_compute_instance" "ai_server" {
+  name         = "ai-agent-server"
+  machine_type = "e2-medium" # 2 vCPU, 4GB RAM (Equilibrado para IA)
   
-  security_groups = [aws_security_group.allow_ai_traffic.name]
-
-  tags = {
-    Name = "AI-Agent-Server"
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+    }
   }
 
-  # Bootstrapping: Script que se ejecuta al iniciar la máquina
-  user_data = <<-EOF
-              #!/bin/bash
-              echo "Iniciando despliegue automático..."
-              apt-get update
-              apt-get install -y docker.io docker-compose git
-              git clone https://github.com/KorbenDallas007/agente-rag-docker.git
-              cd agente-rag-docker
-              docker-compose up -d
-              EOF
+  network_interface {
+    network = google_compute_network.ai_vpc.name
+    access_config {
+      # Esto le asigna una IP pública efímera para acceder
+    }
+  }
+
+  tags = ["http-server", "https-server"]
+
+  # STARTUP SCRIPT: La magia de la automatización
+  # Esto se ejecuta automáticamente cuando Google crea la máquina.
+  metadata_startup_script = <<-EOF
+    #!/bin/bash
+    echo "🚀 Iniciando despliegue del AI Architect..."
+    
+    # 1. Instalar Docker
+    sudo apt-get update
+    sudo apt-get install -y docker.io docker-compose-plugin git
+    
+    # 2. Clonar el repositorio
+    git clone https://github.com/KorbenDallas007/agente-rag-docker.git
+    cd agente-rag-docker
+    
+    # 3. Desplegar la arquitectura
+    sudo docker compose up -d
+  EOF
 }
