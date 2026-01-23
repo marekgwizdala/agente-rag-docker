@@ -1,94 +1,98 @@
-# 🤖 Enterprise AI Architect: Agentic RAG System
+# 🤖 Enterprise AI Architect: Agentic RAG on Google Cloud
 
-> **Arquitectura de IA Generativa Agéntica, Cloud-Agnostic y lista para producción. Implementa patrones de Microservicios, IaC (Terraform), Orquestación (K8s) y CI/CD.**
+> **Sistema de IA Agéntica Autónoma desplegado en Google Cloud Platform (GCP). Arquitectura Cloud-Native, segura y escalable implementando patrones de Microservicios, IaC y CI/CD.**
 
 ![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Kubernetes](https://img.shields.io/badge/Kubernetes-Manifests-326CE5?logo=kubernetes&logoColor=white)
+![GCP](https://img.shields.io/badge/Google_Cloud-Compute_Engine-4285F4?logo=google-cloud&logoColor=white)
 ![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?logo=terraform&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![CI/CD](https://github.com/KorbenDallas007/agente-rag-docker/actions/workflows/ci_cd.yml/badge.svg)
 
-## 🏗️ Arquitectura del Sistema
+## ☁️ Arquitectura de Despliegue (GCP)
 
-Este proyecto demuestra el ciclo completo de ingeniería de software para IA, desde el desarrollo del agente hasta el despliegue en infraestructura escalable.
+La solución está diseñada para operar dentro de una **VPC** segura en Google Cloud. Utiliza **Compute Engine** para el cómputo, orquestado internamente por Docker, con persistencia en discos adjuntos y seguridad perimetral vía **Cloud Firewall**.
 
 ```mermaid
 graph TD
     User((👤 Usuario))
     External_AI(⚡ Groq API / Llama 3)
 
-    subgraph Infrastructure [Docker Host / K8s Node]
-        style Infrastructure fill:#f9f9f9,stroke:#333,stroke-width:2px
+    subgraph GCP ["☁️ Google Cloud Platform (us-central1)"]
+        style GCP fill:#e8f5e9,stroke:#34a853,stroke-width:2px
 
-        subgraph Network [Internal Network]
-            style Network fill:#e1f5fe,stroke:#0277bd,stroke-dasharray: 5 5
+        subgraph VPC ["VPC Network: ai-rag-network"]
+            style VPC fill:#fff,stroke:#4285f4,stroke-dasharray: 5 5
 
-            Frontend[🖥️ Frontend UI<br/>Streamlit]
-            Backend[⚙️ Agent API<br/>FastAPI + LangChain]
-            DB[(🗄️ Vector Memory<br/>Qdrant)]
+            subgraph VM ["🖥️ Compute Engine Instance<br/>(Ubuntu + Docker Runtime)"]
+                style VM fill:#f5f5f5,stroke:#666
+
+                subgraph Docker_Stack ["🐳 Docker Compose Services"]
+                    Frontend[Frontend UI<br/>Streamlit]
+                    Backend[Agent API<br/>FastAPI + Security]
+                    DB[(Vector DB<br/>Qdrant)]
+                end
+                
+                Disk[💾 Persistent Disk<br/>Volume: ./qdrant_data]
+            end
         end
-
-        Volume[💾 Persistent Storage<br/>Docker Volume / PVC]
+        
+        Firewall{🔥 Cloud Firewall}
     end
 
-    %% Flujos de Datos
-    User <-->|HTTP/Websocket| Frontend
-    Frontend <-->|REST API| Backend
-    Backend <-->|Semantic Search| DB
-    Backend <-->|LLM Inference| External_AI
-    DB -.->|Persistence| Volume
+    %% Flujos de Comunicación
+    User -->|HTTP :8501| Firewall
+    Firewall --> Frontend
+    Frontend <-->|Internal Network| Backend
+    Backend <-->|Internal Network| DB
+    Backend <-->|HTTPS| External_AI
+    DB -.->|I/O| Disk
 ```
 
-## 📂 Estructura del Repositorio
+## 📂 Estructura del Proyecto
 
-Este repositorio está organizado para cubrir todas las capas de una arquitectura Enterprise:
+El repositorio implementa el ciclo completo de DevOps y Arquitectura Cloud:
 
-| Carpeta | Descripción | Stack |
+| Carpeta | Descripción | Tecnología |
 | :--- | :--- | :--- |
-| `app/` | **Lógica del Agente:** API, LangChain Tools, RAG Pipeline. | Python, FastAPI, LangChain |
-| `k8s/` | **Orquestación:** Manifiestos para despliegue en clúster (Deployments, Services, PVC). | Kubernetes (YAML) |
-| `terraform/` | **Infrastructure as Code:** Aprovisionamiento automático de VPC y EC2 en AWS. | Terraform (HCL) |
-| `.github/` | **DevOps:** Pipeline de CI/CD para testing automático y build. | GitHub Actions |
-| `docker-compose.yml` | **Entorno Local:** Orquestación rápida para desarrollo y pruebas. | Docker |
+| `app/` | **Core Logic:** Agente autónomo con herramientas (Math + RAG). | LangChain, FastAPI |
+| `terraform/` | **IaC (GCP):** Script para aprovisionar VPC, Firewall y VM automáticamente. | Terraform (HCL) |
+| `k8s/` | **Escalabilidad:** Manifiestos para migración a **GKE** (Google Kubernetes Engine). | Kubernetes YAML |
+| `.github/` | **CI/CD:** Pipeline de validación continua de infraestructura. | GitHub Actions |
+| `docker-compose.yml` | **Orquestación:** Definición de servicios y volúmenes. | Docker |
 
 ## 🧠 Capacidades del Agente
 
-El sistema utiliza un **Agente Autónomo** basado en Llama 3 que decide dinámicamente qué herramienta usar:
-1.  **Calculadora:** Para operaciones matemáticas precisas (evita alucinaciones numéricas).
-2.  **RAG (Retrieval Augmented Generation):** Consulta la base vectorial Qdrant para responder preguntas técnicas específicas.
-3.  **Memoria Persistente:** Los datos vectorizados sobreviven a reinicios gracias a volúmenes persistentes.
+El sistema no es un chatbot pasivo. Es un **Agente Racional** que utiliza el patrón **"ReAct"** (Reason + Act):
+1.  **Seguridad:** API protegida mediante `X-Project-API-Key`.
+2.  **Uso de Herramientas:** Decide si usar Calculadora (Python) o Memoria Vectorial (Qdrant).
+3.  **Persistencia:** La base de conocimiento sobrevive a reinicios del servidor gracias a volúmenes persistentes.
 
-## 🚀 Guía de Ejecución (Quickstart)
+## 🚀 Guía de Despliegue
 
-### Opción A: Docker Compose (Local)
-Ideal para desarrollo y pruebas rápidas.
+### Opción A: Local (Docker Compose)
+Para desarrollo y pruebas rápidas.
+```bash
+git clone https://github.com/KorbenDallas007/agente-rag-docker.git
+cd agente-rag-docker
+docker compose up --build -d
+```
+*Acceso:* `http://localhost:8501`
 
-1.  **Clonar y levantar:**
-    ```bash
-    git clone https://github.com/KorbenDallas007/agente-rag-docker.git
-    cd agente-rag-docker
-    docker compose up --build -d
-    ```
-2.  **Cargar Datos (ETL):**
-    ```bash
-    pip install -r requirements.txt
-    python3 etl_pipeline.py
-    ```
-3.  **Acceder:** `http://localhost:8501`
+### Opción B: Google Cloud (Terraform)
+Despliegue automático de infraestructura productiva.
+```bash
+cd terraform
+# Autenticarse con GCP (requiere gcloud CLI instalado)
+terraform init
+terraform apply
+```
+*Esto creará la VM, instalará Docker y levantará el proyecto automáticamente mediante Startup Scripts.*
 
-### Opción B: Kubernetes (Simulado)
-Manifiestos listos para aplicar en cualquier clúster (EKS, GKE, Minikube).
+### Opción C: Kubernetes (GKE)
+Para entornos Enterprise de alta disponibilidad.
 ```bash
 kubectl apply -f k8s/
 ```
 
-### Opción C: AWS (Terraform)
-Código IaC para aprovisionar infraestructura real.
-```bash
-cd terraform
-terraform init && terraform apply
-```
-
 ---
 *Desarrollado por [KorbenDallas007](https://github.com/KorbenDallas007) - AI Solutions Architect Portfolio.*
-```
